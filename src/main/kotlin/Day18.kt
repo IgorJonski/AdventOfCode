@@ -1,10 +1,13 @@
 import java.io.File
+import java.nio.charset.CoderResult
 
 fun main() {
-    day18task1()
+//    day18task1()
+    day18task2()
 }
 
 data class Trench(var x: Int, var y: Int)
+data class Corner(var x: Long, var y: Long)
 
 fun day18task1() {
     val file = File("src/main/resources/day18_input.txt")
@@ -80,4 +83,69 @@ fun generateInnerPoints(trenches: List<Trench>): Set<Trench> {
         }
     }
     return innerPoints
+}
+
+fun day18task2() {
+    val file = File("src/main/resources/day18_input.txt")
+    if (!file.exists()) {
+        println("File not found")
+        return
+    }
+
+    val outsideTrenchesCorners = mutableSetOf<Corner>()
+    outsideTrenchesCorners.add(Corner(0L, 0L))
+    var pointsOnEdges = 0L
+    val lines = file.readLines()
+    for (line in lines) {
+        val hexColor = line.substringAfter("#").substringBefore(")")
+        val (direction, distance) = decodeDirectionAndDistanceFromHexColorValue(hexColor)
+        val lastCorner = outsideTrenchesCorners.last()
+        outsideTrenchesCorners.add(
+            when (direction) {
+                "U" -> Corner(lastCorner.x, lastCorner.y - distance)
+                "D" -> Corner(lastCorner.x, lastCorner.y + distance)
+                "R" -> Corner(lastCorner.x + distance, lastCorner.y)
+                "L" -> Corner(lastCorner.x - distance, lastCorner.y)
+                else -> throw Exception("Unknown direction")
+            }
+        )
+        pointsOnEdges += distance
+    }
+
+    var interiorPoints = calculateNumberOfInnerPoints(outsideTrenchesCorners.toList())
+    interiorPoints += pointsOnEdges
+    interiorPoints /= 2
+    interiorPoints += 1
+    println(interiorPoints)
+}
+
+
+// https://www.mathopenref.com/coordpolygonarea.html
+// this result doesn't include the points on the edges
+// after adding them, the result needs to be divided by 2
+fun calculateNumberOfInnerPoints(corners: List<Corner>): Long {
+    var innerPoints = 0L
+
+    for (i in 0..<corners.size - 1) {
+        val currentCorner = corners[i]
+        val nextCorner = corners[i + 1]
+        innerPoints += currentCorner.x * nextCorner.y - nextCorner.x * currentCorner.y
+    }
+
+    return innerPoints
+}
+
+fun decodeDirectionAndDistanceFromHexColorValue(hexColor: String): Pair<String, Long> {
+    val direction = hexColor.last()
+    val distance = hexColor.substring(0, hexColor.length - 1).toLong(16)
+
+    val decodedDirection = when (direction) {
+        '0' -> "R"
+        '1' -> "D"
+        '2' -> "L"
+        '3' -> "U"
+        else -> throw Exception("Unknown direction")
+    }
+
+    return Pair(decodedDirection, distance)
 }
