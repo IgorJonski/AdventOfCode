@@ -1,7 +1,8 @@
 import java.io.File
 
 fun main() {
-    day10task1()
+//    day10task1()
+    day10task2()
 }
 
 data class NodePoint(var x: Int, var y: Int)
@@ -141,13 +142,66 @@ fun day10task2() {
     val startingPoint = nodes.first { it.character == 'S' }
     var walker = startingPoint
     var steps = 0
+    val realPipeElements = mutableListOf(walker)
     while (true) {
         val nextPoint = findNextPoint(walker, nodes)
         if (nextPoint == null) {
             println("Path found in ${steps + 1} steps")
             break
         }
+        realPipeElements.add(nextPoint)
         walker = nextPoint
         steps++
     }
+
+    val innerPoints = generateInnerPoints(realPipeElements)
+    val trulyInnerPoints = mutableSetOf<Node>()
+    for (innerPoint in innerPoints) {
+        if (realPipeElements.none { it.point.x == innerPoint.point.x && it.point.y == innerPoint.point.y }) {
+            trulyInnerPoints.add(innerPoint)
+        }
+    }
+    println(trulyInnerPoints.size)
+}
+
+fun checkIfPointIsInsidePolygonUsingRayCasting(nodeToCheck: Node, nodes: List<Node>): Boolean {
+    val x = nodeToCheck.point.x
+    val y = nodeToCheck.point.y
+    var i = 0
+    var j = nodes.size - 1
+    var intersections = 0
+    while (i < nodes.size) {
+        val xi = nodes[i].point.x
+        val yi = nodes[i].point.y
+        val xj = nodes[j].point.x
+        val yj = nodes[j].point.y
+
+        val isPointBetweenYs = (yi > y) != (yj > y)
+        if (isPointBetweenYs) {
+            val isPointBetweenXs = (x < (xj - xi) * (y - yi) / (yj - yi) + xi)
+            if (isPointBetweenXs) {
+                intersections++
+            }
+        }
+        j = i++
+    }
+    return intersections % 2 == 1
+}
+
+fun generateInnerPoints(nodes: List<Node>): Set<Node> {
+    val innerPoints = mutableSetOf<Node>()
+    val minX = nodes.minOf { it.point.x }
+    val maxX = nodes.maxOf { it.point.x }
+    val minY = nodes.minOf { it.point.y }
+    val maxY = nodes.maxOf { it.point.y }
+
+    for (y in minY..maxY) {
+        for (x in minX..maxX) {
+            val point = Node(false, '.', NodePoint(x, y))
+            if (checkIfPointIsInsidePolygonUsingRayCasting(point, nodes)) {
+                innerPoints.add(point)
+            }
+        }
+    }
+    return innerPoints
 }
