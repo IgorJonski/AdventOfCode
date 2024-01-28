@@ -1,11 +1,9 @@
 import java.io.File
-import java.util.LinkedList
-import java.util.Queue
 import java.util.Stack
 
 fun main() {
-    day23task1()
-//    day23part2()
+//    day23task1()
+    day23part2()
 }
 
 data class WalkNode(var point: Point, var actions : MutableList<Point> = mutableListOf())
@@ -93,10 +91,41 @@ fun day23part2() {
         }
     }
 
-    for (pair in graphOfIntersections) {
-        println("${pair.key} -> ${pair.value}")
+    val startingPoint = graphOfIntersections.filter { it.key == Point(1, 0) }.keys.first()
+    val endingPoint = graphOfIntersections.toSortedMap(compareBy { it.y }).filter { it.key.y == grid.size - 1 }.keys.first()
+    var longestPath = 0
+
+    val stack = Stack<Pair<Point, MutableList<Point>>>()
+    stack.push(Pair(startingPoint, mutableListOf(startingPoint)))
+    while (stack.isNotEmpty()) {
+        val node = stack.pop()
+        if (node.first == endingPoint) {
+            val distanceTravelled = getFullDistanceFromAPathOfNodes(node.second, graphOfIntersections)
+            if (distanceTravelled > longestPath) {
+                longestPath = distanceTravelled
+            }
+            println("Finished some path in ${node.second.size - 1} steps with distance $distanceTravelled")
+        }
+        for (nextNode in graphOfIntersections[node.first]!!) {
+            if (node.second.contains(nextNode.first)) {
+                continue
+            }
+            stack.push(Pair(nextNode.first, node.second.toMutableList().apply { add(nextNode.first) }))
+            println("Pushed ${nextNode.first}")
+        }
     }
-    return
+
+    println("Longest path is $longestPath")
+}
+
+fun getFullDistanceFromAPathOfNodes(path: List<Point>, graphOfIntersections: HashMap<Point, MutableList<Pair<Point, Int>>>): Int {
+    var distance = 0
+    for (i in 0 ..< path.size - 1) {
+        val firstPoint = path[i]
+        val secondPoint = path[i + 1]
+        distance += graphOfIntersections[firstPoint]!!.first { it.first == secondPoint }.second
+    }
+    return distance
 }
 
 fun getAvailableMoves(walkNode: WalkNode, grid: List<List<Char>>, endingPoint: Point): Pair<List<WalkNode>, Boolean> {
