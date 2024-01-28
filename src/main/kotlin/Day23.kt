@@ -8,6 +8,10 @@ fun main() {
 
 data class WalkNode(var point: Point, var actions : MutableList<Point> = mutableListOf())
 
+/**
+ * To work, edit ending point in input file to be 'F'.
+ * Starting point is always (1, 0)
+ */
 fun day23task1() {
     val file = File("src/main/resources/day23_input.txt")
     if (!file.exists()) {
@@ -44,6 +48,9 @@ fun day23task1() {
 }
 
 
+/**
+ * To work, edit starting and ending point in input file to be 'T'.
+ */
 fun day23part2() {
     val file = File("src/main/resources/day23_input.txt")
     if (!file.exists()) {
